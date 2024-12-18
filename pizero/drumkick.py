@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import mido
 import time
 import serial
+import os
 
 print("""drumkick.py - Detect which button has been pressed and play a midi note
 
@@ -33,14 +34,20 @@ GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 # "handle_button" will be called every time a button is pressed
 # It receives one argument: the associated input pin.
 def handle_button(pin):
-    label = LABELS[BUTTONS.index(pin)]
-    print("Button press detected on pin: {} label: {}".format(pin, label))
+    label = ""
+    if pin in LABELS:
+      label = LABELS[BUTTONS.index(pin)]
+      print("Button press detected on pin: {} label: {}".format(pin, label))
     vel = 127
     vel_lookup = {"A":25, "B":50, "X":75, "Y":100}
     if label in vel_lookup:
        vel = vel_lookup[label]
+    else:
+       vel = pin
 
-    if midi_out != '':
+    if midi_out == '':
+      os.system("aplay samples/bass.wav &")
+    else:
     	midi_out.send(mido.Message('note_on', note=36, channel=9, velocity=vel))
     print("Playing bass drum with velocty {}".format(vel))
 
@@ -74,4 +81,5 @@ trigger = serial.Serial("/dev/ttyUSB0", 115200)
 # we pause the script to prevent it exiting immediately.
 while True:
   volume = int(trigger.readline().decode('ascii').strip())
+  handle_button(volume)
   print(volume)
