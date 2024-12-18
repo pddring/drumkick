@@ -2,6 +2,7 @@ import signal
 import RPi.GPIO as GPIO
 import mido
 import time
+import serial
 
 print("""drumkick.py - Detect which button has been pressed and play a midi note
 
@@ -66,6 +67,11 @@ if output_device_name == "":
 else:
   midi_out = mido.open_output(output_device_name)
 
+print("Connecting to serial port")
+trigger = serial.Serial("/dev/ttyUSB0", 115200)
+
 # Finally, since button handlers don't require a "while True" loop,
 # we pause the script to prevent it exiting immediately.
-signal.pause()
+while True:
+  volume = int(trigger.readline().decode('ascii').strip())
+  print(volume)
