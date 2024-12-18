@@ -38,7 +38,9 @@ def handle_button(pin):
     vel_lookup = {"A":25, "B":50, "X":75, "Y":100}
     if label in vel_lookup:
        vel = vel_lookup[label]
-    midi_out.send(mido.Message('note_on', note=36, channel=9, velocity=vel))
+
+    if midi_out != '':
+    	midi_out.send(mido.Message('note_on', note=36, channel=9, velocity=vel))
     print("Playing bass drum with velocty {}".format(vel))
 
 
@@ -59,9 +61,10 @@ for dev in output_devices:
     output_device_name = dev
 print("Connecting to MIDI output:", output_device_name)
 if output_device_name == "":
-  print("Sorry - no compatable MIDI output devices detected")
-  exit()
-midi_out = mido.open_output(output_device_name)
+  print("Sorry - no compatable MIDI output devices detected: debug mode only")
+  midi_out = ""
+else:
+  midi_out = mido.open_output(output_device_name)
 
 # Finally, since button handlers don't require a "while True" loop,
 # we pause the script to prevent it exiting immediately.
