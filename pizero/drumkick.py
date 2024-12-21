@@ -5,6 +5,8 @@ import time
 import serial
 import os
 import threading
+from PIL import Image, ImageDraw
+from st7789 import ST7789
 
 print("""drumkick.py - Detect which button has been pressed and play a midi note
 
@@ -49,18 +51,22 @@ def handle_button(pin):
     if vel > 127:
       vel = 127
 
+    if vel < 25:
+      vel = 25
     if midi_out == '':
       os.system("aplay samples/bass.wav &")
     else:
       midi_out.send(mido.Message('note_on', note=36, channel=9, velocity=vel))
+      midi_out.send(mido.Message('note_off', note=36, channel=9))
     print("Playing bass drum with velocty {}".format(vel))
 
 
 # Loop through out buttons and attach the "handle_button" function to each
 # We're watching the "FALLING" edge (transition from 3.3V to Ground) and
 # picking a generous bouncetime of 100ms to smooth out button presses.
-for pin in BUTTONS:
-    GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=100)
+#for pin in BUTTONS:
+#    print("Setting up button", pin)
+#    GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=100)
 
 # Connect to midi devices
 
@@ -86,11 +92,26 @@ def detect_midi():
 detect_midi()
 
 print("Connecting to serial port")
-trigger = serial.Serial("/dev/ttyUSB0", 115200)
+trigger = ""
 
+def connect_trigger():
+  global trigger
+  try:
+    trigger = serial.Serial("/dev/ttyUSB0", 115200)
+  except:
+    print("Could not detect drum trigger via USB")
+
+connect_trigger()
 print("Loaded successfully: playing cymbal crash sound as indicator")
 os.system("aplay samples/ride_edge.wav&")
 
+def poll_buttons():
+  while True:
+    for i in range(len(BUTTONS)):
+      if GPIO.input(BUTTONS[i]) == False:
+        print("Button", LABELS[i], "pressed")
+        handle_button(BUTTONS[i])
+    time.sleep(.5)
 
 # check if any devices are disconnected
 def detect_usb_changes():
@@ -100,13 +121,57 @@ def detect_usb_changes():
     detect_midi()
     time.sleep(10)
 
+def update_screen():
+  global volume
+  SPI_SPEED_MHZ = 80
+
+  image = Image.new("RGB", (240, 240), (0, 0, 0))
+  draw = ImageDraw.Draw(image)
+
+  st7789 = ST7789(
+      rotation=90,  # Needed to display the right way up on Pirate Audio
+      port=0,       # SPI port
+      cs=1,         # SPI port Chip-select channel
+      dc=9,         # BCM pin used for data/command
+      backlight=13,
+      spi_speed_hz=SPI_SPEED_MHZ * 1000 * 1000
+  )
+  global volume
+  while True:
+      draw.rectangle((0, 0, 240, 240), (0,0,0))    
+      draw.ellipse((115-volume/2, 115-volume/2, 125+volume/2, 125+volume/2), fill='red')
+      draw.text((0,0), "Connected:", (100,100,100))
+      draw.text((0,20), output_device_name, (100, 100, 100))
+
+      if volume > 0:
+          volume = int(volume * .8)
+      
+      st7789.display(image)
+
+      time.sleep(1.0 / 30)
+
 
 
 # Finally, since button handlers don't require a "while True" loop,
 # we pause the script to prevent it exiting immediately.
+
+# start thread to detect MIDI device connect / disconnect
 t_check_usb = threading.Thread(target = detect_usb_changes)
 t_check_usb.start()
 
+# start thread to update screen
+t_update_screen = threading.Thread(target = update_screen)
+t_update_screen.start()
+
+# start thread to poll buttons (edge detection isn't working)
+t_poll_buttons = threading.Thread(target = poll_buttons)
+t_poll_buttons.start()
+
+volume = 127
 while True:
-  volume = int(trigger.readline().decode('ascii').strip())
-  handle_button(volume)
+  if trigger!= "":
+    volume = int(trigger.readline().decode('ascii').strip())
+    handle_button(volume)
+  else:
+    time.sleep(5)
+    connect_trigger()
