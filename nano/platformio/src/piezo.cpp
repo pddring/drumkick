@@ -10,11 +10,17 @@
 int sensorPin = A0;   // select the input pin for the potentiometer
 int ledPin = LED_BUILTIN;      // select the pin for the LED
 int sensorValue = 0;  // variable to store the value coming from the sensor
-const int THRESHOLD = 2;
+const int THRESHOLD = 5;
 const int DELAY = 2;
-const int NOTE_ON_TIME = 50;
+const int NOTE_ON_TIME = 150;
 const int STARTUP_FLASH_TIME = 50;
 const int STARTUP_FLASH_COUNT = 5;
+const int FILTER_SIZE = 10;
+const int DELAY_BETWEEN_FILTER = 1;
+const int SCALE_DIVIDER = 12;
+int filter[FILTER_SIZE];
+int i = 0;
+int total;
 
 
 void setup() {
@@ -33,14 +39,21 @@ void loop() {
   // read the value from the sensor:
   sensorValue = analogRead(sensorPin);
   if(sensorValue > THRESHOLD) {
-    Serial.println(sensorValue);
-    // turn the ledPin on
-    digitalWrite(ledPin, HIGH);
-    // stop the program for <sensorValue> milliseconds:
-    delay(NOTE_ON_TIME);
-    // turn the ledPin off:
-    digitalWrite(ledPin, LOW);
+    filter[i] = sensorValue;
+    i++;
+    if(i == FILTER_SIZE) {
+      for(i; i >0; i--) {
+        total += filter[i];
+      }
+      sensorValue = total / SCALE_DIVIDER;
+      total = 0;
+      Serial.println(sensorValue);
+      // turn the ledPin on
+      digitalWrite(ledPin, HIGH);
+      // stop the program for <sensorValue> milliseconds:
+      delay(NOTE_ON_TIME);
+      // turn the ledPin off:
+      digitalWrite(ledPin, LOW);
+    } 
   }
-  // stop the program for <sensorValue> milliseconds:
-  delay(DELAY);
 }
