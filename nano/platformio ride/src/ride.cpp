@@ -24,8 +24,7 @@ const int DELAY = 2;
 const int NOTE_ON_TIME = 150;
 const int STARTUP_FLASH_TIME = 50;
 const int STARTUP_FLASH_COUNT = 5;
-const int FILTER_SIZE = 5;
-const int DELAY_BETWEEN_FILTER = 1;
+const int FILTER_SIZE = 50;
 const int SCALE_DIVIDER = 6;
 
 // rolling filters
