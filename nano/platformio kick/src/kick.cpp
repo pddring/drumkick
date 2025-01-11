@@ -48,6 +48,7 @@ void loop() {
     }
     sensorValue = total / SCALE_DIVIDER;
     total = 0;
+    Serial.print("KICK:");
     Serial.println(sensorValue);
     // turn the ledPin on
     digitalWrite(ledPin, HIGH);
