@@ -36,28 +36,45 @@ GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # "handle_button" will be called every time a button is pressed
 # It receives one argument: the associated input pin.
-def handle_button(pin):
+def handle_trigger(pad, volume):
+    print(pad,volume)
     label = ""
-    if pin in LABELS:
+    if pad in LABELS:
       label = LABELS[BUTTONS.index(pin)]
-      print("Button press detected on pin: {} label: {}".format(pin, label))
+      print("Button press detected on pin: {} label: {}".format(pad, label))
     vel = 127
     vel_lookup = {"A":25, "B":50, "X":75, "Y":100}
     if label in vel_lookup:
        vel = vel_lookup[label]
     else:
-       vel = pin
+       vel = volume
 
     if vel > 127:
       vel = 127
 
     if vel < 25:
       vel = 25
+
+    sample = "bass"
+    midi_note = 36
+
+    if pad == "KICK":
+      sample = "bass"
+      midi_note = 36
+    elif pad == "EDGE":
+      sample = "ride_edge"
+      midi_note = 59
+    elif pad == "BOW":
+      sample = "ride_bow"
+      midi_note = 51
+    elif pad == "BELL":
+      sample = "ride_bell"
+      midi_note = 53
     if midi_out == '':
-      os.system("aplay samples/bass.wav &")
+      os.system("aplay samples/" + sample + ".wav &")
     else:
-      midi_out.send(mido.Message('note_on', note=36, channel=9, velocity=vel))
-      midi_out.send(mido.Message('note_off', note=36, channel=9))
+      midi_out.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
+      midi_out.send(mido.Message('note_off', note=midi_note, channel=9))
     print("Playing bass drum with velocty {}".format(vel))
 
 
@@ -91,17 +108,25 @@ def detect_midi():
 
 detect_midi()
 
-print("Connecting to serial port")
-trigger = ""
+def connect_trigger(port_number):
+  while True:
+    trigger = ""
+    try:
+      port = "/dev/ttyUSB" + str(port_number)
+      trigger = serial.Serial(port, 115200)
+      print("Connected to " + port)
+    except:
+      print("Could not detect drum trigger via USB")
 
-def connect_trigger():
-  global trigger
-  try:
-    trigger = serial.Serial("/dev/ttyUSB0", 115200)
-  except:
-    print("Could not detect drum trigger via USB")
+    if trigger!= "":
+      line = trigger.readline().decode('ascii').strip()
+      print(line)
+      pad,volume = line.split(":")
+      handle_trigger(pad,int(volume))
+    else:
+      time.sleep(5)      
 
-connect_trigger()
+
 print("Loaded successfully: playing cymbal crash sound as indicator")
 os.system("aplay samples/ride_edge.wav&")
 
@@ -168,10 +193,8 @@ t_poll_buttons = threading.Thread(target = poll_buttons)
 t_poll_buttons.start()
 
 volume = 127
-while True:
-  if trigger!= "":
-    volume = int(trigger.readline().decode('ascii').strip())
-    handle_button(volume)
-  else:
-    time.sleep(5)
-    connect_trigger()
+t_triggers = []
+print("Connecting to serial ports")
+for i in range(2):
+  t_triggers.append(threading.Thread(target = connect_trigger, args=[i]))
+  t_triggers[i].start()
