@@ -1,12 +1,22 @@
+testing_without_pi = False
+
 import signal
-import RPi.GPIO as GPIO
+from PIL import Image, ImageDraw
+try:
+    import RPi.GPIO as GPIO
+    from st7789 import ST7789
+except:
+    testing_without_pi = True
+    import tkinter as tk
+    from PIL import ImageTk
+    
 import mido
 import time
 import serial
 import os
 import threading
-from PIL import Image, ImageDraw
-from st7789 import ST7789
+
+
 
 print("""drumkick.py - Detect which button has been pressed and play a midi note
 
@@ -26,12 +36,15 @@ BUTTONS = [5, 6, 16, 24]
 # These correspond to buttons A, B, X and Y respectively
 LABELS = ['A', 'B', 'X', 'Y']
 
-# Set up RPi.GPIO with the "BCM" numbering scheme
-GPIO.setmode(GPIO.BCM)
+if testing_without_pi:
+  print("Testing without a PI: buttons disabled")
+else:
+  # Set up RPi.GPIO with the "BCM" numbering scheme
+  GPIO.setmode(GPIO.BCM)
 
-# Buttons connect to ground when pressed, so we should set them up
-# with a "PULL UP", which weakly pulls the input signal to 3.3V.
-GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+  # Buttons connect to ground when pressed, so we should set them up
+  # with a "PULL UP", which weakly pulls the input signal to 3.3V.
+  GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 def handle_trigger(pad, volume):
     global last_midi_note
@@ -143,6 +156,10 @@ def connect_trigger(port_number):
 print("Loaded successfully: playing cymbal crash sound as indicator")
 os.system("aplay samples/ride_edge.wav&")
 
+
+def emulate_buttons():
+  pass
+
 def poll_buttons():
   note = 1
   while True:
@@ -174,15 +191,18 @@ def update_screen():
 
   image = Image.new("RGB", (240, 240), (0, 0, 0))
   draw = ImageDraw.Draw(image)
-
-  st7789 = ST7789(
-      rotation=90,  # Needed to display the right way up on Pirate Audio
-      port=0,       # SPI port
-      cs=1,         # SPI port Chip-select channel
-      dc=9,         # BCM pin used for data/command
-      backlight=13,
-      spi_speed_hz=SPI_SPEED_MHZ * 1000 * 1000
-  )
+  if testing_without_pi:
+    window = tk.Tk()
+    lbl = None
+  else:
+    st7789 = ST7789(
+        rotation=90,  # Needed to display the right way up on Pirate Audio
+        port=0,       # SPI port
+        cs=1,         # SPI port Chip-select channel
+        dc=9,         # BCM pin used for data/command
+        backlight=13,
+        spi_speed_hz=SPI_SPEED_MHZ * 1000 * 1000
+    )
   global volume
   global last_midi_note
   color = (0,0,255)
@@ -211,14 +231,29 @@ def update_screen():
       if volume > 0:
           volume = int(volume * .8)
       
-      st7789.display(image)
+      if testing_without_pi:
+        if lbl == None:
+          img = ImageTk.PhotoImage(image)
+          lbl = tk.Label(window, image=img)
+          lbl.pack()
+          window.update()
+        else:
+          img = ImageTk.PhotoImage(image)
+          lbl.configure(image = img)
+          lbl.image = img
+          
+          window.update()
+          
+      else:
+        st7789.display(image)
+        
 
       time.sleep(1.0 / 30)
 
 
 
-# Finally, since button handlers don't require a "while True" loop,
-# we pause the script to prevent it exiting immediately.
+last_midi_note = 0
+volume = 127
 
 # start thread to detect MIDI device connect / disconnect
 t_check_usb = threading.Thread(target = detect_usb_changes)
@@ -229,15 +264,16 @@ t_update_screen = threading.Thread(target = update_screen)
 t_update_screen.start()
 
 # start thread to poll buttons (edge detection isn't working)
-t_poll_buttons = threading.Thread(target = poll_buttons)
+if testing_without_pi:
+  t_poll_buttons = threading.Thread(target = emulate_buttons)
+else:
+  t_poll_buttons = threading.Thread(target = poll_buttons)
 t_poll_buttons.start()
 
 # start thread to log midi input
 t_midi_in = threading.Thread(target = log_midi_in)
 t_midi_in.start()
 
-volume = 127
-last_midi_note = 0
 t_triggers = []
 print("Connecting to serial ports")
 for i in range(2):
