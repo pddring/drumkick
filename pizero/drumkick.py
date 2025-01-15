@@ -33,21 +33,9 @@ GPIO.setmode(GPIO.BCM)
 # with a "PULL UP", which weakly pulls the input signal to 3.3V.
 GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-
-# "handle_button" will be called every time a button is pressed
-# It receives one argument: the associated input pin.
 def handle_trigger(pad, volume):
-    print(pad,volume)
-    label = ""
-    if pad in LABELS:
-      label = LABELS[BUTTONS.index(pin)]
-      print("Button press detected on pin: {} label: {}".format(pad, label))
-    vel = 127
-    vel_lookup = {"A":25, "B":50, "X":75, "Y":100}
-    if label in vel_lookup:
-       vel = vel_lookup[label]
-    else:
-       vel = volume
+    global last_midi_note
+    vel = volume
 
     if vel > 127:
       vel = 127
@@ -74,25 +62,22 @@ def handle_trigger(pad, volume):
       os.system("aplay samples/" + sample + ".wav &")
     else:
       midi_out.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
-      midi_out.send(mido.Message('note_off', note=midi_note, channel=9))
-    print("Playing bass drum with velocty {}".format(vel))
-
-
-# Loop through out buttons and attach the "handle_button" function to each
-# We're watching the "FALLING" edge (transition from 3.3V to Ground) and
-# picking a generous bouncetime of 100ms to smooth out button presses.
-#for pin in BUTTONS:
-#    print("Setting up button", pin)
-#    GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=100)
+      #midi_out.send(mido.Message('note_on', note=midi_note, channel=9, velocity=0))
+    print("Playing {} (midi note {}) with velocty {}".format(pad, midi_note, vel))
+    last_midi_note = midi_note
 
 # Connect to midi devices
 
 def detect_midi():
   global midi_out
   global output_device_name
+  global midi_in
+  global input_device_name
+  input_devices = mido.get_input_names()
   output_devices = mido.get_output_names()
   allowed_devices = ['MPK mini Play', 'USBMIDI', 'TD-17']
   output_device_name = ""
+  input_device_name = ""
   for dev in output_devices:
     print("Found midi output device: ", dev)
     for allowed in allowed_devices:
@@ -106,11 +91,36 @@ def detect_midi():
   else:
     midi_out = mido.open_output(output_device_name)
 
+  for dev in input_devices:
+    print("Found midi input device: ", dev)
+    for allowed in allowed_devices:
+      if allowed in dev:
+        print("Found MIDI device:", dev)
+        input_device_name = dev
+  print("Connecting to MIDI output:", input_device_name)
+  if input_device_name == "":
+    print("Sorry - no compatable MIDI input devices detected: debug mode only")
+    midi_in = ""
+  else:
+    midi_in = mido.open_input(input_device_name)
+
 detect_midi()
 
-def connect_trigger(port_number):
+def log_midi_in():
+  global volume, last_midi_note
   while True:
-    trigger = ""
+    if midi_in != "":
+      msg = midi_in.receive()
+      print("Received MIDI note {} at velocity {}".format(msg.note, msg.velocity))
+      last_midi_note = msg.note
+      if msg.velocity > volume:
+        volume = msg.velocity
+      
+
+def connect_trigger(port_number):
+  trigger = ""
+  global volume
+  while True:
     try:
       port = "/dev/ttyUSB" + str(port_number)
       trigger = serial.Serial(port, 115200)
@@ -119,10 +129,13 @@ def connect_trigger(port_number):
       print("Could not detect drum trigger via USB")
 
     if trigger!= "":
-      line = trigger.readline().decode('ascii').strip()
-      print(line)
-      pad,volume = line.split(":")
-      handle_trigger(pad,int(volume))
+      while True:
+        line = trigger.readline().decode('ascii').strip()
+        pad,vol = line.split(":")
+        vol = int(vol)
+        handle_trigger(pad,vol)
+        if vol > volume:
+          volume = vol
     else:
       time.sleep(5)      
 
@@ -131,16 +144,25 @@ print("Loaded successfully: playing cymbal crash sound as indicator")
 os.system("aplay samples/ride_edge.wav&")
 
 def poll_buttons():
+  note = 1
   while True:
     for i in range(len(BUTTONS)):
       if GPIO.input(BUTTONS[i]) == False:
-        print("Button", LABELS[i], "pressed")
-        handle_button(BUTTONS[i])
+        
+        if LABELS[i] == "A":
+          note+= 1
+        elif LABELS[i] == "B":
+          note-= 1
+        if note < 1:
+          note = 1
+        if note > 127:
+          note = 127
+        print("Button", LABELS[i], "pressed", note)
+        midi_out.send(mido.Message('note_on', note=note, channel=9, velocity=127))
     time.sleep(.5)
 
 # check if any devices are disconnected
 def detect_usb_changes():
-
   while True:
     print("Checking USB devices")
     detect_midi()
@@ -162,9 +184,27 @@ def update_screen():
       spi_speed_hz=SPI_SPEED_MHZ * 1000 * 1000
   )
   global volume
+  global last_midi_note
+  color = (0,0,255)
+  COLORS = {
+    42: (255,255,0), # Hi hat closed
+    46: (255,255,0), # Hi hat open
+    44: (255,255,0), # Hi hat foot
+    57: (255,255,0), # Crash
+    48: (255,100,255), # Low tom
+    45: (0,255,255), # Low tom
+    43: (155,0,0), # Floor tom
+    36: (255,255,255), # Kick
+    51: (100,255,50), # Ride bow
+    59: (100,255,50), # Ride edge
+    53: (100,255,50), # Ride bell
+  }
   while True:
-      draw.rectangle((0, 0, 240, 240), (0,0,0))    
-      draw.ellipse((115-volume/2, 115-volume/2, 125+volume/2, 125+volume/2), fill='red')
+      draw.rectangle((0, 0, 240, 240), (0,0,0))
+      color = "red"
+      if last_midi_note in COLORS:
+        color = COLORS[last_midi_note]
+      draw.ellipse((115-volume/2, 115-volume/2, 125+volume/2, 125+volume/2), fill=color)
       draw.text((0,0), "Connected:", (100,100,100))
       draw.text((0,20), output_device_name, (100, 100, 100))
 
@@ -192,7 +232,12 @@ t_update_screen.start()
 t_poll_buttons = threading.Thread(target = poll_buttons)
 t_poll_buttons.start()
 
+# start thread to log midi input
+t_midi_in = threading.Thread(target = log_midi_in)
+t_midi_in.start()
+
 volume = 127
+last_midi_note = 0
 t_triggers = []
 print("Connecting to serial ports")
 for i in range(2):
