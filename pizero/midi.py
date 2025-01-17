@@ -87,14 +87,15 @@ def log_midi_in():
   while True:
     if globals.midi_in != "":
       msg = globals.midi_in.receive()
-      log("Received MIDI note {} at velocity {}".format(msg.note, msg.velocity))
-      last_midi_note = msg.note
-      if msg.note in globals.volume:
-        if msg.velocity > globals.volume[msg.note]:
+      if msg.type == "note_on":
+        log("Received MIDI note {} at velocity {}".format(msg.note, msg.velocity))
+        last_midi_note = msg.note
+        if msg.note in globals.volume:
+          if msg.velocity > globals.volume[msg.note]:
+              globals.volume[msg.note] = msg.velocity
+        else:
             globals.volume[msg.note] = msg.velocity
-      else:
-          globals.volume[msg.note] = msg.velocity
-      globals.last_activity = datetime.datetime.now()
+        globals.last_activity = datetime.datetime.now()
     else:
       time.sleep(1)
 
