@@ -22,23 +22,19 @@ def preload(sounds):
 
 def play_sample(sample):
     
-    if globals.testing_without_pi:
-        if sample in samples:
-            log("Playing", sample)
-            pygame.mixer.Sound.play(samples[sample])
-            
-        else:
-            log("Sample", sample, "not found")
+    if sample in samples:
+        log("Playing", sample)
+        pygame.mixer.Sound.play(samples[sample])
+        
     else:
-        os.system("aplay samples/" + sample + ".wav")
+        log("Sample", sample, "not found")
 
-
+pygame.init()
+files = get_sample_names()
+preload(files)
+pygame.mixer.set_num_channels(256)
 
 if __name__ == "__main__":
-    pygame.init()
-    files = get_sample_names()
-    preload(files)
-    pygame.mixer.set_num_channels(256)
     for i in range(16):
         play_sample("ride_bow")
         if i % 4 == 0:
