@@ -21,6 +21,7 @@ def send(msg):
         log("No MIDI output device to send", msg)
         audio.play_note(pad)
     else:
+        log("Sending to midi device", msg)
         globals.midi_out.send(msg)
 
 
@@ -31,7 +32,7 @@ def detect_usb_changes():
   
   global input_device_name
 
-  allowed_devices = ['MPK mini Play', 'USBMIDI', 'TD-17', 'MPK Mini', 'Microsoft GS Wavetable']
+  allowed_devices = ['MPK mini Play', 'USBMIDI', 'TD-17', 'MPK Mini']
 
   while True:   
     # scan for output devices

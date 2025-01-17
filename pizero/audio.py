@@ -20,7 +20,7 @@ def preload(sounds):
         samples[sound] = pygame.mixer.Sound("samples/" + sound +".wav")
 
 notes = {
-    42: "bass",
+    36: "bass",
     51: "ride_bow",
     38: "snare",
     48: "tom_high",
