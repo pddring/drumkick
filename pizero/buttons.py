@@ -3,6 +3,7 @@ from diagnostics import log
 import mido
 import time
 import midi
+import datetime
 
 
 # The buttons on Pirate Audio are connected to pins 5, 6, 16 and 24
@@ -38,6 +39,7 @@ def handle_button(label):
     elif label == "X":
         note = notes[note_index]    
         midi.send(mido.Message('note_on', note=note, channel=9, velocity=127))
+    globals.last_activity = datetime.datetime.now()
     
 
 def poll_buttons():

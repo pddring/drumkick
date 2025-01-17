@@ -3,6 +3,7 @@ import time
 import globals
 from diagnostics import log
 import audio
+import datetime
 
 output_device_name = ""
 input_device_name = ""
@@ -23,6 +24,7 @@ def send(msg):
     else:
         log("Sending to midi device", msg)
         globals.midi_out.send(msg)
+    globals.last_activity = datetime.datetime.now()
 
 
 # scans for and connects to MIDI devices

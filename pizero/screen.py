@@ -1,9 +1,10 @@
 import globals
 import midi
 import time
+import datetime
 from diagnostics import log
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 if globals.testing_without_pi:
     import tkinter as tk
     from PIL import ImageTk
@@ -12,7 +13,7 @@ else:
 
 def update_screen():
   SPI_SPEED_MHZ = 80
-
+  SLEEP_S = 5
   image = Image.new("RGB", (240, 240), (0, 0, 0))
   draw = ImageDraw.Draw(image)
   if globals.testing_without_pi:
@@ -64,36 +65,45 @@ def update_screen():
      }
   }
   running = True
+  time_font = ImageFont.truetype("fonts/dimitri.ttf", size=66)
+  date_font = ImageFont.truetype("fonts/dimitri.ttf", size=30)
   while running:
+      now = datetime.datetime.now()
+      inactive = now - globals.last_activity
       draw.rectangle((0, 0, 240, 240), (0,0,0))
-      draw.text((0,0), "IN: " + midi.output_device_name, (200,100,100))
-      draw.text((0,10), "OUT: " + midi.output_device_name, (100,200,100))      
+      if inactive.seconds > SLEEP_S:
+         draw.text((0,0), now.strftime("%I:%M:%S"), (100, 100, 100), font=time_font)
+         draw.text((30,80), now.strftime("%a %d %b %y"), (100, 100, 100), font=date_font)
+      else:
          
-      y = 50
-      others = []
-      for pad in globals.volume:
-         if globals.volume[pad] > 1:
-            others.append(pad)
-      for category in CATEGORIES:
+         draw.text((0,0), "IN: " + midi.output_device_name, (200,100,100))
+         draw.text((0,10), "OUT: " + midi.output_device_name, (100,200,100))      
+            
+         y = 50
+         others = []
+         for pad in globals.volume:
+            if globals.volume[pad] > 1:
+               others.append(pad)
+         for category in CATEGORIES:
+            v = 1
+            for pad in CATEGORIES[category]["pads"]:
+               if pad in globals.volume:
+                  if pad in others:
+                     others.remove(pad)
+                  if globals.volume[pad] > v:
+                     v = globals.volume[pad]
+            
+            draw.rectangle((100, y, v+100, y+10), CATEGORIES[category]["colour"])
+            draw.text((0, y), category, (255,255,255))      
+            y += 20
+         
+         # show other category
          v = 1
-         for pad in CATEGORIES[category]["pads"]:
-            if pad in globals.volume:
-              if pad in others:
-                 others.remove(pad)
-              if globals.volume[pad] > v:
-                 v = globals.volume[pad]
-          
-         draw.rectangle((100, y, v+100, y+10), CATEGORIES[category]["colour"])
-         draw.text((0, y), category, (255,255,255))      
-         y += 20
-      
-      # show other category
-      v = 1
-      for pad in others:
-         if globals.volume[pad] > v:
-            v = globals.volume[pad]
-      draw.rectangle((100, y, v+100, y+10), (255, 0, 0))
-      draw.text((0, y), "Other", (255,255,255))      
+         for pad in others:
+            if globals.volume[pad] > v:
+               v = globals.volume[pad]
+         draw.rectangle((100, y, v+100, y+10), (255, 0, 0))
+         draw.text((0, y), "Other", (255,255,255))      
       
       for pad in globals.volume:
         if globals.volume[pad] > 1:
