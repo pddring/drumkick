@@ -20,12 +20,15 @@ def connect_trigger(port_number):
         pad,vol = line.split(":")
         vol = int(vol)
         handle_trigger(pad,vol)
-        if vol > globals.volume:
-          globals.volume = vol
     else:
       time.sleep(5)      
 
 def handle_trigger(pad, volume):
+    if pad in globals.volume:
+      if volume > globals.volume[pad]:
+        globals.volume[pad] = volume
+    else:
+      globals.volume[pad] = volume
     vel = volume
 
     if vel > 127:

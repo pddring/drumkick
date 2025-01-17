@@ -75,8 +75,11 @@ def log_midi_in():
       msg = globals.midi_in.receive()
       log("Received MIDI note {} at velocity {}".format(msg.note, msg.velocity))
       last_midi_note = msg.note
-      if msg.velocity > globals.volume:
-        globals.volume = msg.velocity
+      if msg.note in globals.volume:
+        if msg.velocity > globals.volume[msg.note]:
+            globals.volume[msg.note] = msg.velocity
+      else:
+          globals.volume[msg.note] = msg.velocity
 
 
 if __name__ == "__main__":

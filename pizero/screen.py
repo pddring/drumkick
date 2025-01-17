@@ -3,11 +3,6 @@ import midi
 import time
 from diagnostics import log
 
-try:
-    import RPi.GPIO as GPIO
-except:
-    globals.testing_without_pi = True
-
 from PIL import Image, ImageDraw
 if globals.testing_without_pi:
     import tkinter as tk
@@ -16,7 +11,6 @@ else:
    from st7789 import ST7789
 
 def update_screen():
-  volume = globals.volume
   SPI_SPEED_MHZ = 80
 
   image = Image.new("RGB", (240, 240), (0, 0, 0))
@@ -34,34 +28,72 @@ def update_screen():
         spi_speed_hz=SPI_SPEED_MHZ * 1000 * 1000
     )
   global last_midi_note
-  color = (0,0,255)
-  COLORS = {
-    42: (255,255,0), # Hi hat closed
-    46: (255,255,0), # Hi hat open
-    44: (255,255,0), # Hi hat foot
-    57: (255,255,0), # Crash
-    48: (255,100,255), # Low tom
-    45: (0,255,255), # Low tom
-    43: (155,0,0), # Floor tom
-    36: (255,255,255), # Kick
-    51: (100,255,50), # Ride bow
-    59: (100,255,50), # Ride edge
-    53: (100,255,50), # Ride bell
+  
+  CATEGORIES = {
+     "Hi Hat": {
+        "pads": [42, 46, 44],
+        "colour": (255,255,0)
+     },
+     "Crash": {
+        "pads": [57],
+        "colour": (255,255,0)
+     },
+     "Ride": {
+        "pads": [48],
+        "colour": (100,255,50)
+     },
+     "Hi Tom": {
+        "pads": [48],
+        "colour": (255,100,255)
+     },
+     "Low Tom": {
+        "pads": [43],
+        "colour": (0, 255, 255),
+     },
+     "Kick": {
+        "pads": [36],
+        "colour": (255,255,255)
+     },
+     "Ride": {
+        "pads": [51, 59, 53],
+        "colour": (100, 255, 50)
+     }
   }
   running = True
   while running:
       draw.rectangle((0, 0, 240, 240), (0,0,0))
-      color = "red"
-      if globals.last_midi_note in COLORS:
-        color = COLORS[globals.last_midi_note]
-      draw.ellipse((115-volume/2, 115-volume/2, 125+volume/2, 125+volume/2), fill=color)
-      draw.text((0,0), "MIDI in:", (200,100,100))
-      draw.text((20,20), midi.output_device_name, (200, 100, 100))
-      draw.text((0,40), "MIDI out:", (100,200,100))
-      draw.text((20,60), midi.input_device_name, (100, 200, 100))
-
-      if volume > 0:
-          volume = int(volume * .8)
+      draw.text((0,0), "IN: " + midi.output_device_name, (200,100,100))
+      draw.text((0,10), "OUT: " + midi.output_device_name, (100,200,100))      
+         
+      y = 50
+      others = []
+      for pad in globals.volume:
+         if globals.volume[pad] > 1:
+            others.append(pad)
+      for category in CATEGORIES:
+         v = 1
+         for pad in CATEGORIES[category]["pads"]:
+            if pad in globals.volume:
+              if pad in others:
+                 others.remove(pad)
+              if globals.volume[pad] > v:
+                 v = globals.volume[pad]
+          
+         draw.rectangle((100, y, v+100, y+10), CATEGORIES[category]["colour"])
+         draw.text((0, y), category, (255,255,255))      
+         y += 20
+      
+      # show other category
+      v = 1
+      for pad in others:
+         if globals.volume[pad] > v:
+            v = globals.volume[pad]
+      draw.rectangle((100, y, v+100, y+10), (255, 0, 0))
+      draw.text((0, y), "Other", (255,255,255))      
+      
+      for pad in globals.volume:
+        if globals.volume[pad] > 1:
+            globals.volume[pad] = int(globals.volume[pad] * .8)
       
       if globals.testing_without_pi:
         if lbl == None:

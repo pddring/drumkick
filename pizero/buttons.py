@@ -14,7 +14,7 @@ BUTTONS = [5, 6, 16, 24]
 LABELS = ['A', 'B', 'X', 'Y']
 note = 26
 if not globals.testing_without_pi:
-    import GPIO
+    import RPi.GPIO as GPIO
     # Set up RPi.GPIO with the "BCM" numbering scheme
     GPIO.setmode(GPIO.BCM)
 
@@ -43,7 +43,6 @@ def poll_buttons():
             b = input("Press a button:")
             handle_button(b)
     else:
-        import GPIO
         while True:
             for i in range(len(BUTTONS)):
                 if GPIO.input(BUTTONS[i]) == False:
