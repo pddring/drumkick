@@ -38,8 +38,8 @@ def update_screen():
         "pads": [57],
         "colour": (255,255,0)
      },
-     "Ride": {
-        "pads": [48],
+     "Snare": {
+        "pads": [38],
         "colour": (100,255,50)
      },
      "Hi Tom": {
@@ -47,6 +47,10 @@ def update_screen():
         "colour": (255,100,255)
      },
      "Low Tom": {
+        "pads": [45],
+        "colour": (0, 255, 255),
+     },
+     "Floor Tom": {
         "pads": [43],
         "colour": (0, 255, 255),
      },

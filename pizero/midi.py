@@ -2,6 +2,7 @@ import mido
 import time
 import globals
 from diagnostics import log
+import audio
 
 output_device_name = ""
 input_device_name = ""
@@ -15,9 +16,10 @@ def send(msg):
         globals.volume[pad] = volume
     else:
       globals.volume[pad] = volume
-      
+
     if globals.midi_out == "":
         log("No MIDI output device to send", msg)
+        audio.play_note(pad)
     else:
         globals.midi_out.send(msg)
 

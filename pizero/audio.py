@@ -19,9 +19,23 @@ def preload(sounds):
     for sound in sounds:
         samples[sound] = pygame.mixer.Sound("samples/" + sound +".wav")
 
+notes = {
+    42: "bass",
+    51: "ride_bow",
+    38: "snare",
+    48: "tom_high",
+    53: "ride_bell",
+    59: "ride_edge",
+    43: "tom_floor",
+    45: "tom_low"
+}
+
+def play_note(note):
+    global notes
+    if note in notes:
+        play_sample(notes[note])
 
 def play_sample(sample):
-    
     if sample in samples:
         log("Playing", sample)
         pygame.mixer.Sound.play(samples[sample])

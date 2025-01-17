@@ -21,7 +21,7 @@ if not globals.testing_without_pi:
     # with a "PULL UP", which weakly pulls the input signal to 3.3V.
     GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-notes = [42, 46, 44, 57, 48, 48, 43, 36, 51, 59, 53]
+notes = [42, 46, 44, 57, 38, 48, 43, 45, 36, 51, 59, 53]
 note_index = 0
 
 def handle_button(label):
