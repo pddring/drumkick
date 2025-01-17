@@ -94,6 +94,9 @@ def log_midi_in():
             globals.volume[msg.note] = msg.velocity
       else:
           globals.volume[msg.note] = msg.velocity
+      globals.last_activity = datetime.datetime.now()
+    else:
+      time.sleep(1)
 
 
 if __name__ == "__main__":
