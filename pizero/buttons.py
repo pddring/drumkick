@@ -12,7 +12,6 @@ BUTTONS = [5, 6, 16, 24]
 
 # These correspond to buttons A, B, X and Y respectively
 LABELS = ['A', 'B', 'X', 'Y']
-note = 26
 if not globals.testing_without_pi:
     import RPi.GPIO as GPIO
     # Set up RPi.GPIO with the "BCM" numbering scheme
@@ -22,18 +21,24 @@ if not globals.testing_without_pi:
     # with a "PULL UP", which weakly pulls the input signal to 3.3V.
     GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+notes = [42, 46, 44, 57, 48, 48, 43, 36, 51, 59, 53]
+note_index = 0
+
 def handle_button(label):
-    global note
+    global notes, note_index
+    log("Button", label, "pressed")
     if label == "A":
-        note+= 1
+        note_index += 1
+        if note_index > len(notes) - 1:
+            note_index = 0
     elif label == "B":
-        note-= 1
-    if note < 1:
-        note = 1
-    if note > 127:
-        note = 127
-    log("Button", label, "pressed", note)
-    midi.send(mido.Message('note_on', note=note, channel=9, velocity=127))
+        note_index -= 1
+        if note_index < 0:
+            note_index = len(notes) - 1
+    elif label == "X":
+        note = notes[note_index]    
+        midi.send(mido.Message('note_on', note=note, channel=9, velocity=127))
+    
 
 def poll_buttons():
     global note

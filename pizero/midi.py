@@ -7,6 +7,15 @@ output_device_name = ""
 input_device_name = ""
 
 def send(msg):
+    pad = msg.note
+    volume = msg.velocity
+
+    if pad in globals.volume:
+      if volume > globals.volume[pad]:
+        globals.volume[pad] = volume
+    else:
+      globals.volume[pad] = volume
+      
     if globals.midi_out == "":
         log("No MIDI output device to send", msg)
     else:
