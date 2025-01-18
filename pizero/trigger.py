@@ -1,8 +1,10 @@
 from diagnostics import log
 import time
 import mido
+import midi
 import globals
 import serial
+import audio
 
 def connect_trigger(port_number):
   trigger = ""
@@ -48,9 +50,11 @@ def handle_trigger(pad, volume):
       sample = "ride_bell"
       midi_note = 53
     if globals.midi_out == '':
-      os.system("aplay samples/" + sample + ".wav &")
+      audio.play_sample(sample)
     else:
       midi.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
     log("Playing {} (midi note {}) with velocty {}".format(pad, midi_note, vel))
     globals.last_midi_note = midi_note
 
+if __name__ == "__main__":
+  connect_trigger(0)
