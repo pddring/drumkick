@@ -21,14 +21,14 @@ int valueEdge = 0;
 // properties
 const int THRESHOLD = 20;
 const int DELAY = 2;
-const int NOTE_ON_TIME = 150;
+const int NOTE_ON_TIME = 40;
 const int STARTUP_FLASH_TIME = 50;
 const int STARTUP_FLASH_COUNT = 5;
-const int FILTER_SIZE = 10;
+const int FILTER_SIZE = 50;
 const int PRE_SCALE_DIVIDER = 4;
-const int POST_SCALE_DIVIDER_BELL = 10;
-const int POST_SCALE_DIVIDER_BOW = 8;
-const int POST_SCALE_DIVIDER_EDGE = 10;
+const int POST_SCALE_DIVIDER_BELL = 32;
+const int POST_SCALE_DIVIDER_BOW = 24;
+const int POST_SCALE_DIVIDER_EDGE = 32;
 const unsigned int IDLE_THRESHOLD = 15;
 
 // rolling filters
@@ -46,6 +46,7 @@ long totalEdge;
 unsigned int idleBell = 0;
 unsigned int idleBow = 0;
 unsigned int idleEdge = 0;
+unsigned int totalIdle = 0;
 
 
 void setup() {
@@ -65,49 +66,46 @@ void loop() {
     for(iBow; iBow > 0; iBow--) {
       totalBow += filterBow[iBow] / PRE_SCALE_DIVIDER;
     }
+    totalBow /= POST_SCALE_DIVIDER_BOW;
+    
     for(iEdge; iEdge > 0; iEdge--) {
       totalEdge += filterEdge[iEdge] / PRE_SCALE_DIVIDER;
     }
+    totalEdge /= POST_SCALE_DIVIDER_EDGE;
+
     for(iBell; iBell > 0; iBell--) {
       totalBell += filterBell[iBell] / PRE_SCALE_DIVIDER;
     }  
+    totalBell /= POST_SCALE_DIVIDER_BELL;
     
-    /*Serial.print("BOW:");
-    Serial.print(totalBow);
-    Serial.print(" EDGE:");
-    Serial.print(totalEdge);
-    Serial.print(" BELL:");
-    Serial.print(totalBell);
-    
-    Serial.print(" IDLE_BELL: ");
-    Serial.print(idleBell);
-    Serial.print(" IDLE_EDGE: ");
-    Serial.print(idleEdge);
-    Serial.print(" IDLE_BOW: ");
-    Serial.print(idleBow);
-    */
-
-    unsigned int totalIdle = idleEdge + idleBow + idleBell;
-    if(totalIdle > IDLE_THRESHOLD) {
-      // Serial.println(" > IGNORE");
-    } else {
-      if(totalEdge > totalBow && totalEdge > totalBell) {
+    if(totalEdge > totalBow && totalEdge > totalBell) {
+      totalIdle = idleBow + idleBell;
+      if(totalIdle > IDLE_THRESHOLD) {
+        // Serial.println("Ignore Edge");
+      } else {
         Serial.print("EDGE:");
-        totalEdge = totalEdge / POST_SCALE_DIVIDER_EDGE;    
         Serial.println(totalEdge);
       }
-      if(totalBow >= totalEdge && totalBow >= totalBell) {
+    }
+    if(totalBow >= totalEdge && totalBow >= totalBell) {
+      totalIdle = idleEdge + idleBell;
+      if(totalIdle > IDLE_THRESHOLD) {
+        // Serial.println("Ignore Bow");
+      } else {
         Serial.print("BOW:");
-        totalBow = totalBow / POST_SCALE_DIVIDER_BOW;
         Serial.println(totalBow);
       }
-      if(totalBell > totalBow && totalBell > totalEdge) {
+    }
+    if(totalBell > totalBow && totalBell > totalEdge) {
+      totalIdle = idleEdge + idleBow;
+      if(totalIdle > IDLE_THRESHOLD) {
+        // Serial.println("Ignore Bell");
+      } else {
         Serial.print("BELL:");
-        totalBell = totalBell / POST_SCALE_DIVIDER_BELL;
         Serial.println(totalBell);
       }
     }
-
+  
     totalBow = 0;
     totalEdge = 0;
     totalBell = 0;
