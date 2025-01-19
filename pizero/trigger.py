@@ -5,6 +5,7 @@ import midi
 import globals
 import serial
 import audio
+import datetime
 
 def connect_trigger(port_number):
   trigger = ""
@@ -87,6 +88,7 @@ def handle_trigger(pad, volume):
       midi.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
     log("Playing {} (midi note {}) with velocty {}".format(pad, midi_note, vel))
     globals.last_midi_note = midi_note
+    globals.last_activity = datetime.datetime.now()
 
 if __name__ == "__main__":
   import random

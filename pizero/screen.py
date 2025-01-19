@@ -183,6 +183,8 @@ def update_screen():
       elif globals.state == globals.STATE_TIME:
          draw.text((0,0), now.strftime("%I:%M:%S"), (100, 100, 100), font=time_font)
          draw.text((30,80), now.strftime("%a %d %b %y"), (100, 100, 100), font=date_font)
+         if inactive.seconds < SLEEP_S:
+           globals.state = globals.STATE_MIXER
       
       for pad in globals.volume:
         if globals.volume[pad] > 1:
