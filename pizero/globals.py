@@ -19,11 +19,28 @@ pad_settings = {
     }
 }
 
+SENSOR_NAMES = ["KICK", "BOW", "BELL", "EDGE"]
+selected_sensor = 0
+
+
+STATE_MIXER = 1
+STATE_TIME = 2
+STATE_SENSOR_SETTINGS = 3
+
+SENSOR_STATE_SELECT_PAD = 1
+SENSOR_STATE_SET_MAX_IN = 2
+SENSOR_STATE_RESET = 3
+SENSOR_STATE_SAVE = 4
+SENSOR_STATE_BACK = 5
+sensor_state = SENSOR_STATE_SELECT_PAD
+state = STATE_MIXER
+
 def save():
     with open("settings.json", "w") as f:
         json.dump(pad_settings, f) 
 
 def load():
+    log("Loading settings from file")
     try:    
         with open("settings.json", "r") as f:
             pad_settings = json.load(f)
@@ -32,6 +49,7 @@ def load():
         save()
 
 last_midi_note = 0
+load()
 
 if __name__ == "__main__":
     while True:
