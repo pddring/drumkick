@@ -19,7 +19,7 @@ int valueBow = 0;
 int valueEdge = 0;
 
 // properties
-const int THRESHOLD = 20;
+const int THRESHOLD = 10;
 const int DELAY = 2;
 const int NOTE_ON_TIME = 40;
 const int STARTUP_FLASH_TIME = 50;
@@ -120,9 +120,9 @@ void loop() {
 
   // read the value from the bow of the ride:
   valueBow = analogRead(pinBow);
+  filterBow[iBow] = valueBow;
+  iBow++;
   if(valueBow > THRESHOLD) {
-    filterBow[iBow] = valueBow;
-    iBow++;
     idleBow = 0;
   } else {
     idleBow++;
@@ -130,9 +130,9 @@ void loop() {
 
   // read the value from the edge of the ride:
   valueEdge = analogRead(pinEdge);
-  if(valueEdge > THRESHOLD) {
-    filterEdge[iEdge] = valueEdge;
-    iEdge++;
+  filterEdge[iEdge] = valueEdge;
+  iEdge++;
+  if(valueEdge > THRESHOLD) {  
     idleEdge = 0;
   } else {
     idleEdge++;
@@ -140,9 +140,9 @@ void loop() {
 
   // read the value from the bow of the ride:
   valueBell = analogRead(pinBell);
+  filterBell[iBell] = valueBell;
+  iBell++;
   if(valueBell > THRESHOLD) {
-    filterBell[iBell] = valueBell;
-    iBell++;
     idleBell = 0;
   } else {
     idleBell++;
