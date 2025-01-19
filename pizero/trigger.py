@@ -19,7 +19,7 @@ def connect_trigger(port_number):
     if trigger!= "":
       while True:
         line = trigger.readline().decode('ascii').strip()
-        pad,vol = handle_line()
+        pad,vol = handle_line(line)
         handle_trigger(pad,vol)
     else:
       time.sleep(5)
