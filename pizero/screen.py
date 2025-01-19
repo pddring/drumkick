@@ -11,6 +11,10 @@ if globals.testing_without_pi:
 else:
    from st7789 import ST7789
 
+STATE_MIXER = 1
+STATE_TIME = 2
+STATE_PAD_SETTINGS = 3
+
 def update_screen():
   SPI_SPEED_MHZ = 80
   SLEEP_S = 5
