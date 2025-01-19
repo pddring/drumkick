@@ -93,7 +93,7 @@ void loop() {
       if(range < previousRange) {
         state = STATE_FALLING;
         digitalWrite(ledPin, HIGH);
-        Serial.print("KICK: ");
+        Serial.print("KICK:");
         Serial.println(previousRange);
       } else {
         previousRange = range;

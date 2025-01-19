@@ -121,13 +121,11 @@ void loop() {
             if(previousRange[i] > max) {
               max = previousRange[i];
               iMax = i;
-            }            
-            state[i] = STATE_FALLING;
+            }
+            state[i] = STATE_FALLING;            
           }
           Serial.println();
-        } else {
-          previousRange[iPiezo] = range;
-        }
+        } 
         break;
       
       // peak detected - need to ignore values until level falls low enough to start looking for new spike
@@ -138,5 +136,6 @@ void loop() {
         }
         break;
     }
+    previousRange[iPiezo] = range;
   }
 }
