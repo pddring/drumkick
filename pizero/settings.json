@@ -1,1 +1,1 @@
-{"default": {"max_in": 1023, "max_out": 127, "min_out": 0}}
+{"default": {"max_in": 1023, "max_out": 127, "min_out": 0}, "KICK": {"max_in": 950, "max_out": 127, "min_out": 0}, "EDGE": {"max_in": 1023, "max_out": 127, "min_out": 0}}

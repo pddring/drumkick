@@ -43,7 +43,7 @@ def poll_buttons():
             for i in range(len(BUTTONS)):
                 if GPIO.input(BUTTONS[i]) == False:
                     handle_button(LABELS[i])
-            time.sleep(.5)
+            time.sleep(.1)
 
 if __name__ == "__main__":
     poll_buttons()

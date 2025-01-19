@@ -29,9 +29,11 @@ STATE_SENSOR_SETTINGS = 3
 
 SENSOR_STATE_SELECT_PAD = 1
 SENSOR_STATE_SET_MAX_IN = 2
-SENSOR_STATE_RESET = 3
-SENSOR_STATE_SAVE = 4
-SENSOR_STATE_BACK = 5
+SENSOR_STATE_SET_MIN_OUT = 3
+SENSOR_STATE_SET_MAX_OUT = 4
+SENSOR_STATE_RESET = 5
+SENSOR_STATE_SAVE = 6
+SENSOR_STATE_BACK = 7
 sensor_state = SENSOR_STATE_SELECT_PAD
 state = STATE_MIXER
 
@@ -40,6 +42,7 @@ def save():
         json.dump(pad_settings, f) 
 
 def load():
+    global pad_settings
     log("Loading settings from file")
     try:    
         with open("settings.json", "r") as f:
