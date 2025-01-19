@@ -26,8 +26,8 @@ int sensorValue = 0;                          // stores the absolute sensor valu
 const int STARTUP_FLASH_TIME = 50;            // flash speed on startup
 const int STARTUP_FLASH_COUNT = 5;            // number of times the LED flashes on startup
 
-const int THRESHOLD_RISING = 10;              // threshold to cross before moving out of idle into rising
-const int THRESHOLD_FALLING = 5;              // threshold ot cross before moving out of falling back into idle
+const int THRESHOLD_RISING = 20;              // threshold to cross before moving out of idle into rising
+const int THRESHOLD_FALLING = 10;             // threshold ot cross before moving out of falling back into idle
 
 const int SAMPLE_FILTER_SIZE = 50;            // number of samples used to calculate the range
 int sampleFilter[SAMPLE_FILTER_SIZE];         // used to store the raw sample values (rolling window filter)
@@ -70,6 +70,14 @@ void loop() {
     }
   }
   int range = max - min;
+
+  /* Debugging info: State, sample, range
+  Serial.print(state);
+  Serial.print(" ");
+  Serial.print(sensorValue);
+  Serial.print(" ");
+  Serial.println(range);
+  */
 
   switch(state) {
     // ignore low level changes (noise) until a spike is detected
