@@ -1,4 +1,6 @@
 import datetime
+import json
+from diagnostics import log
 testing_without_pi = False
 try:
     import RPi.GPIO
@@ -17,4 +19,25 @@ pad_settings = {
     }
 }
 
+def save():
+    with open("settings.json", "w") as f:
+        json.dump(pad_settings, f) 
+
+def load():
+    try:    
+        with open("settings.json", "r") as f:
+            pad_settings = json.load(f)
+    except:
+        log("Could not load settings file settings.json - creating a new one")
+        save()
+
 last_midi_note = 0
+
+if __name__ == "__main__":
+    while True:
+        cmd = input("load or save?")
+        if cmd == "load":
+            load()
+            print(pad_settings)
+        elif cmd == "save":
+            save()
