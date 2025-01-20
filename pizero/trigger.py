@@ -25,6 +25,21 @@ def connect_trigger(port_number):
     else:
       time.sleep(5)
 
+def scale(pad, vol):
+  pad_settings = globals.pad_settings["default"]
+  if pad in globals.pad_settings:
+    pad_settings = globals.pad_settings[pad]
+
+  vol = vol / pad_settings["max_in"]
+  range = pad_settings["max_out"] - pad_settings["min_out"]
+  vol = int(pad_settings["min_out"] + (vol * range))
+
+  if vol > 127:
+    vol = 127
+  if vol < 0:
+    vol = 0
+  return vol
+
 def handle_line(line):
   # detect loudest signal
   parts = line.split(" ")
@@ -35,24 +50,19 @@ def handle_line(line):
       pad,vol = part.split(":")
       vol = int(vol)
 
-      pad_settings = globals.pad_settings["default"]
-      if pad in globals.pad_settings:
-        pad_settings = globals.pad_settings[pad]
+      globals.latest[pad] = vol
+      if pad not in globals.loudest:
+        globals.loudest[pad] = vol
+      if vol > globals.loudest[pad]:
+        globals.loudest[pad] = vol
 
-      vol = vol / pad_settings["max_in"]
-      range = pad_settings["max_out"] - pad_settings["min_out"]
-      vol = int(pad_settings["min_out"] + (vol * range))
-      if vol > 127:
-        vol = 127
-      if vol < 0:
-        vol = 0
+      vol = scale(pad, vol)
 
       if vol > max_vol:
         max_vol = vol
         max_pad = pad
     except:
       log("Invalid trigger input:", line)
-      
   return max_pad, max_vol
   
 
@@ -62,8 +72,8 @@ def handle_trigger(pad, volume):
     if vel > 127:
       vel = 127
 
-    if vel < 25:
-      vel = 25
+    if vel < 0:
+      vel = 0
 
     sample = "bass"
     midi_note = 36
@@ -84,8 +94,12 @@ def handle_trigger(pad, volume):
       audio.play_sample(sample)
     else:
       midi.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
+    if midi_note in globals.volume:
+      if volume > globals.volume[midi_note]:
+        globals.volume[midi_note] = volume
+    else:
+      globals.volume[midi_note] = volume
     log("Playing {} (midi note {}) with velocty {}".format(pad, midi_note, vel))
-    globals.last_midi_note = midi_note
     globals.last_activity = datetime.datetime.now()
 
 if __name__ == "__main__":

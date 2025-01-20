@@ -33,12 +33,7 @@ def handle_button(label):
 
 def poll_buttons():
     global note
-    if globals.testing_without_pi:
-        log("No GPIO buttons detected: press A, B, X or Y to emulate a button press")
-        while True:
-            b = input("Press a button:")
-            handle_button(b)
-    else:
+    if not globals.testing_without_pi:
         while True:
             for i in range(len(BUTTONS)):
                 if GPIO.input(BUTTONS[i]) == False:

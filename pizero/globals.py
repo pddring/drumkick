@@ -19,6 +19,9 @@ pad_settings = {
     }
 }
 
+latest = {}
+loudest = {}
+
 SENSOR_NAMES = ["KICK", "BOW", "BELL", "EDGE"]
 selected_sensor = 0
 
@@ -33,7 +36,6 @@ SENSOR_STATE_SET_MIN_OUT = 3
 SENSOR_STATE_SET_MAX_OUT = 4
 SENSOR_STATE_RESET = 5
 SENSOR_STATE_SAVE = 6
-SENSOR_STATE_BACK = 7
 sensor_state = SENSOR_STATE_SELECT_PAD
 state = STATE_MIXER
 

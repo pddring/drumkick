@@ -40,3 +40,13 @@ log("Connecting to serial ports")
 for i in range(2):
   t_triggers.append(threading.Thread(target = trigger.connect_trigger, args=[i]))
   t_triggers[i].start()
+
+if globals.testing_without_pi:
+  import random
+  while True:
+    line = input("Trigger input (leave blank for random)")
+    if line == "":
+      line = "KICK:{}".format(random.randint(0, 1023))
+      log(line)
+    pad, vol = trigger.handle_line(line)
+    trigger.handle_trigger(pad,vol)

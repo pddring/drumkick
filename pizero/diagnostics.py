@@ -6,7 +6,7 @@ def log(*args):
   
   msg = "".join([str(a) + " " for a in args])
   buffer.append(msg)
-  while len(buffer) > 6:
+  while len(buffer) > 4:
     buffer.pop(0)
   print(datetime.now(), *args)
 

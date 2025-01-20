@@ -5,7 +5,7 @@ import datetime
 import copy
 from diagnostics import log
 import diagnostics
-
+import trigger
 
 from PIL import Image, ImageDraw, ImageFont
 if globals.testing_without_pi:
@@ -33,11 +33,11 @@ def key_handler_label(label):
       if label == "A":
          globals.sensor_state -= 1
          if globals.sensor_state < globals.SENSOR_STATE_SELECT_PAD:
-            globals.sensor_state = globals.SENSOR_STATE_BACK
+            globals.sensor_state = globals.SENSOR_STATE_SAVE
       # B moves down
       elif label == "B":
          globals.sensor_state += 1
-         if globals.sensor_state > globals.SENSOR_STATE_BACK:
+         if globals.sensor_state > globals.SENSOR_STATE_SAVE:
             globals.sensor_state = globals.SENSOR_STATE_SELECT_PAD
       
       # X and Y changes currently selected item
@@ -50,14 +50,21 @@ def key_handler_label(label):
             globals.selected_sensor -= 1
             if globals.selected_sensor < 0:
                globals.selected_sensor = len(globals.SENSOR_NAMES) - 1
-      elif globals.sensor_state == globals.SENSOR_STATE_BACK:
-         if label in ["X", "Y"]:
-            globals.state = globals.STATE_MIXER
-            globals.last_activity = datetime.datetime.now()
 
+      
       elif globals.sensor_state == globals.SENSOR_STATE_RESET:
-         if label in ["X", "Y"]:
+         # Reset to default
+         if label  == "X": 
             globals.pad_settings[globals.SENSOR_NAMES[globals.selected_sensor]] = copy.deepcopy(globals.pad_settings["default"])
+         
+         # auto (load from max hit detected)
+         if label == "Y":
+            pad = globals.SENSOR_NAMES[globals.selected_sensor]
+            if pad in globals.loudest:
+               globals.pad_settings[pad]["max_in"] = globals.loudest[pad]
+            else:
+               log("Play " + pad + " as loud as you can then try again")
+
             
 
       elif globals.sensor_state == globals.SENSOR_STATE_SAVE:
@@ -231,8 +238,7 @@ def update_screen():
             y = 100
          elif globals.sensor_state == globals.SENSOR_STATE_SAVE:
             y = 120
-         elif globals.sensor_state == globals.SENSOR_STATE_BACK:
-            y = 140
+
          c = (255, 255, 255)
          draw.rectangle((0, y, 240, y+20), (90, 60, 60))
          draw.text((0, y+5), "<-", (0,0,0))
@@ -256,11 +262,18 @@ def update_screen():
             pad_settings["max_out"]
          ), c)
 
-         centre_text(100, "Reset", c)
+         centre_text(100, "X: Reset | Y: Auto", c)
          centre_text(120, "Save", c)
-         centre_text(140, "Back", c)
+         latest = 0
+         if sensor in globals.latest:
+            latest = globals.latest[sensor]
+         loudest = 0
+         if sensor in globals.loudest:
+            loudest = globals.loudest[sensor]
+         centre_text(140, "Latest: {}/1023 => {}/127".format(latest, trigger.scale(sensor, latest)), (0, 0, 255))
+         centre_text(160, "Loudest: {}/1023 => {}/127".format(loudest, trigger.scale(sensor, loudest)), (0, 0, 255))
 
-         y = 160
+         y = 180
          for msg in diagnostics.buffer:
             draw.text((0, y), msg, (255,0,0))
             y+= 10
