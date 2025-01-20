@@ -47,8 +47,6 @@ def handle_line(line):
       if vol < 0:
         vol = 0
 
-      print(pad,vol)
-
       if vol > max_vol:
         max_vol = vol
         max_pad = pad
@@ -99,6 +97,6 @@ if __name__ == "__main__":
       edge = random.randint(1, 1023)
       bell = random.randint(1, 1023)
       line = "BOW:{} BELL:{} EDGE:{}".format(bow, edge, bell)
-      print(line)
-    print(handle_line(line))
+      log(line)
+    log(handle_line(line))
 

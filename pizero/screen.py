@@ -4,6 +4,7 @@ import time
 import datetime
 import copy
 from diagnostics import log
+import diagnostics
 
 
 from PIL import Image, ImageDraw, ImageFont
@@ -258,6 +259,13 @@ def update_screen():
          centre_text(100, "Reset", c)
          centre_text(120, "Save", c)
          centre_text(140, "Back", c)
+
+         y = 160
+         for msg in diagnostics.buffer:
+            draw.text((0, y), msg, (255,0,0))
+            y+= 10
+            if y > 240:
+               break
       
       elif globals.state == globals.STATE_TIME:
          draw.text((0,0), now.strftime("%I:%M:%S"), (100, 100, 100), font=time_font)
