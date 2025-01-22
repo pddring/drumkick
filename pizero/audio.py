@@ -30,15 +30,15 @@ notes = {
     45: "tom_low"
 }
 
-def play_note(note):
+def play_note(note, vel=127):
     global notes
     if note in notes:
-        play_sample(notes[note])
+        play_sample(notes[note], vel)
 
-def play_sample(sample):
+def play_sample(sample, vel=127):
     if sample in samples:
-        log("Playing", sample)
-        pygame.mixer.Sound.play(samples[sample])
+        log("Playing", sample, "at volume:", vel)
+        pygame.mixer.Sound.play(samples[sample]).set_volume(vel/127)
         
     else:
         log("Sample", sample, "not found")

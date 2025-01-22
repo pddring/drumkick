@@ -91,7 +91,7 @@ def handle_trigger(pad, volume):
       sample = "ride_bell"
       midi_note = 53
     if globals.midi_out == '':
-      audio.play_sample(sample)
+      audio.play_sample(sample, vel)
     else:
       midi.send(mido.Message('note_on', note=midi_note, channel=9, velocity=vel))
     if midi_note in globals.volume:

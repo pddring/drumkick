@@ -27,7 +27,7 @@ notes = [42, 46, 44, 57, 38, 48, 43, 45, 36, 51, 59, 53]
 note_index = 0
 
 def handle_button(label):
-    log("Button", label, "pressed")
+    #log("Button", label, "pressed")
     screen.key_handler_label(label)
     
 
